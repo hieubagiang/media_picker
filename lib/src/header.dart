@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:media_picker_widget/src/widgets/media_tile.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
@@ -17,6 +16,7 @@ class Header extends StatefulWidget {
     required this.controller,
     this.mediaCount,
     this.decoration,
+    this.submitWidget,
   });
 
   final AssetPathEntity selectedAlbum;
@@ -26,6 +26,7 @@ class Header extends StatefulWidget {
   final HeaderController controller;
   final MediaCount? mediaCount;
   final PickerDecoration? decoration;
+  final Widget? submitWidget;
 
   @override
   _HeaderState createState() => _HeaderState();
@@ -62,143 +63,153 @@ class _HeaderState extends State<Header> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+        Stack(
+          alignment: Alignment.center,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: IconButton(
-                  icon: widget.decoration!.cancelIcon ?? Text('Hủy'),
-                  onPressed: () {
-                    if (_arrowAnimation.value == 1)
-                      _arrowAnimController!.reverse();
-                    widget.onBack();
-                  }),
-            ),
-            Expanded(
-              child: TextButton(
-                style: ButtonStyle(
-                  overlayColor:
-                      MaterialStateProperty.all(Colors.grey.withOpacity(0.05)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: IconButton(
+                      icon: widget.decoration!.cancelIcon ?? Text('Hủy'),
+                      onPressed: () {
+                        if (_arrowAnimation.value == 1)
+                          _arrowAnimController!.reverse();
+                        widget.onBack();
+                      }),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    AnimatedSwitcher(
-                      duration: Duration(milliseconds: 200),
-                      transitionBuilder:
-                          (Widget child, Animation<double> animation) {
-                        return SlideTransition(
-                          child: child,
-                          position: Tween<Offset>(
-                                  begin: Offset(0.0, -0.5),
-                                  end: Offset(0.0, 0.0))
-                              .animate(animation),
-                        );
-                      },
-                      child: Text(
-                        widget.selectedAlbum.name,
-                        style: widget.decoration!.albumTitleStyle,
-                        key: ValueKey<String>(widget.selectedAlbum.id),
-                      ),
-                    ),
-                    AnimatedBuilder(
-                      animation: _arrowAnimation,
-                      builder: (context, child) => Transform.rotate(
-                        angle: _arrowAnimation.value * pi,
-                        child: Icon(
-                          Icons.keyboard_arrow_up_outlined,
-                          size: (widget
-                                      .decoration!.albumTitleStyle?.fontSize) !=
-                                  null
-                              ? widget.decoration!.albumTitleStyle!.fontSize! *
-                                  1.5
-                              : 20,
-                          color: widget.decoration!.albumTitleStyle?.color ??
-                              Theme.of(context).primaryColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                onPressed: () {
-                  if (widget.albumController.isPanelOpen) {
-                    widget.albumController.close();
-                    _arrowAnimController!.reverse();
-                  }
-                  if (widget.albumController.isPanelClosed) {
-                    widget.albumController.open();
-                    _arrowAnimController!.forward();
-                  }
-                },
-              ),
-            ),
-            if (widget.mediaCount == MediaCount.multiple)
-              AnimatedSwitcher(
-                duration: Duration(milliseconds: 100),
-                transitionBuilder: (Widget child, Animation<double> animation) {
-                  return SlideTransition(
-                    child: child,
-                    position: Tween<Offset>(
+                Spacer(),
+                if (widget.mediaCount == MediaCount.multiple)
+                  AnimatedSwitcher(
+                    duration: Duration(milliseconds: 100),
+                    transitionBuilder: (Widget child, Animation<double> animation) {
+                      return SlideTransition(
+                        child: child,
+                        position: Tween<Offset>(
                             begin: Offset(1, 0.0), end: Offset(0.0, 0.0))
-                        .animate(animation),
-                  );
-                },
-                child: (selectedMedia.isNotEmpty)
-                    ? TextButton(
-                        key: Key('button'),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              widget.decoration!.completeText,
-                              style: widget.decoration!.completeTextStyle ??
-                                  TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500),
+                            .animate(animation),
+                      );
+                    },
+                    child: (selectedMedia.isNotEmpty)
+                        ? widget.submitWidget != null ? InkWell(
+                      child: widget.submitWidget,
+                      onTap: selectedMedia.isNotEmpty
+                          ? () {
+                        widget.onDone(selectedMedia);
+                      }
+                          : null,
+                    ) : TextButton(
+                      key: Key('button'),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            widget.decoration!.completeText,
+                            style: widget.decoration!.completeTextStyle ??
+                                TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500),
+                          ),
+                          Text(
+                            ' (${selectedMedia.length})',
+                            style: TextStyle(
+                              color: widget
+                                  .decoration!.completeTextStyle?.color ??
+                                  Colors.white,
+                              fontSize: widget.decoration!.completeTextStyle
+                                  ?.fontSize !=
+                                  null
+                                  ? widget.decoration!.completeTextStyle!
+                                  .fontSize! *
+                                  0.77
+                                  : 11,
+                              fontWeight: FontWeight.w300,
                             ),
-                            Text(
-                              ' (${selectedMedia.length})',
-                              style: TextStyle(
-                                color: widget
-                                        .decoration!.completeTextStyle?.color ??
-                                    Colors.white,
-                                fontSize: widget.decoration!.completeTextStyle
-                                            ?.fontSize !=
-                                        null
-                                    ? widget.decoration!.completeTextStyle!
-                                            .fontSize! *
-                                        0.77
-                                    : 11,
-                                fontWeight: FontWeight.w300,
-                              ),
-                            ),
-                          ],
-                        ),
-                        onPressed: selectedMedia.isNotEmpty
-                            ? () {
-                                widget.onDone(selectedMedia);
-                              }
-                            : null,
-                        style: widget.decoration!.completeButtonStyle ??
-                            ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all(
-                                  Theme.of(context).primaryColor),
-                              shape: MaterialStateProperty.all(
-                                  RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(3))),
-                            ),
-                      )
-                    : const SizedBox(
-                        width: 24,
+                          ),
+                        ],
                       ),
-              ),
-            const SizedBox(
-              width: 16,
+                      onPressed: selectedMedia.isNotEmpty
+                          ? () {
+                        widget.onDone(selectedMedia);
+                      }
+                          : null,
+                      style: widget.decoration!.completeButtonStyle ??
+                          ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all(
+                                Theme.of(context).primaryColor),
+                            shape: MaterialStateProperty.all(
+                                RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(3))),
+                          ),
+                    )
+                        : const SizedBox(
+                      width: 24,
+                    ),),
+                const SizedBox(
+                  width: 16,
+                ),
+              ],
             ),
+            SizedBox(width: MediaQuery.of(context).size.width *0.7,child: TextButton(
+              style: ButtonStyle(
+                overlayColor:
+                MaterialStateProperty.all(Colors.grey.withOpacity(0.05)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  AnimatedSwitcher(
+                    duration: Duration(milliseconds: 200),
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) {
+                      return SlideTransition(
+                        child: child,
+                        position: Tween<Offset>(
+                            begin: Offset(0.0, -0.5),
+                            end: Offset(0.0, 0.0))
+                            .animate(animation),
+                      );
+                    },
+                    child: Text(
+                      widget.selectedAlbum.name,
+                      style: widget.decoration!.albumTitleStyle,
+                      key: ValueKey<String>(widget.selectedAlbum.id),
+                    ),
+                  ),
+                  AnimatedBuilder(
+                    animation: _arrowAnimation,
+                    builder: (context, child) => Transform.rotate(
+                      angle: _arrowAnimation.value * pi,
+                      child: Icon(
+                        Icons.keyboard_arrow_up_outlined,
+                        size: (widget
+                            .decoration!.albumTitleStyle?.fontSize) !=
+                            null
+                            ? widget.decoration!.albumTitleStyle!.fontSize! *
+                            1.5
+                            : 20,
+                        color: widget.decoration!.albumTitleStyle?.color ??
+                            Theme.of(context).primaryColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              onPressed: () {
+                if (widget.albumController.isPanelOpen) {
+                  widget.albumController.close();
+                  _arrowAnimController!.reverse();
+                }
+                if (widget.albumController.isPanelClosed) {
+                  widget.albumController.open();
+                  _arrowAnimController!.forward();
+                }
+              },
+            )),
           ],
         ),
         Container(width: double.infinity, height: 1, color: Color(0xFFC2CEDB))

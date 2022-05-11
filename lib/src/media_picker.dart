@@ -9,6 +9,7 @@ class MediaPicker extends StatefulWidget {
     this.decoration,
     this.scrollController,
     this.maxSelect,
+    this.submitWidget,
     required this.captureCamera,
   });
 
@@ -20,6 +21,7 @@ class MediaPicker extends StatefulWidget {
   final PickerDecoration? decoration;
   final ScrollController? scrollController;
   final int? maxSelect;
+  final Widget? submitWidget;
 
   @override
   _MediaPickerState createState() => _MediaPickerState();
@@ -149,6 +151,7 @@ class _MediaPickerState extends State<MediaPicker> {
       controller: headerController,
       mediaCount: widget.mediaCount,
       decoration: decoration,
+      submitWidget: widget.submitWidget,
     );
   }
 

@@ -72,7 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
         context: context,
         builder: (context) {
           return MediaPicker(
-            maxSelect: 3,
+            maxSelect: 1,
             onPick: (selectedList) {
               Future.forEach<AssetEntity>(selectedList, (element) async {
                 final _file = await element.file;
@@ -84,6 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
             },
             onCancel: () => Navigator.pop(context),
             mediaCount: MediaCount.multiple,
+            submitWidget: FittedBox(child: const Icon(Icons.send)),
             mediaType: MediaType.all,
             decoration: PickerDecoration(
               columnCount: 3,
